@@ -3,11 +3,11 @@ import copy
 import datetime
 import glob
 import os
-import pickle
-import tarfile
-import shutil
-import warnings
 import pathlib
+import pickle
+import shutil
+import tarfile
+import warnings
 from importlib import import_module
 
 from app.objects.c_ability import Ability
@@ -22,6 +22,7 @@ from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
+from app.utility.base_world import BaseWorld
 
 MIN_MODULE_LEN = 1
 
@@ -176,7 +177,8 @@ class DataService(DataServiceInterface, BaseService):
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,
                                            executors=executors, requirements=requirements, privilege=privilege,
-                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
+                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton,
+                                           plugin=plugin,
                                            **ab)
 
     async def convert_v0_ability_executor(self, ability_data: dict):
@@ -260,6 +262,9 @@ class DataService(DataServiceInterface, BaseService):
             obj.plugin = self._get_plugin_name(filename)
             await self.store(obj)
 
+    async def load_planner_file(self, filename, access=BaseWorld.Access.RED):
+        await self.load_yaml_file(Planner, filename, access)
+
     async def create_or_update_everything_adversary(self):
         everything = {
             'id': '785baa02-df5d-450a-ab3a-1a863f22b4b0',
@@ -269,10 +274,10 @@ class DataService(DataServiceInterface, BaseService):
                 ability.ability_id
                 for ability in await self.locate('abilities')
                 if (
-                    ability.access == self.Access.RED
-                    or ability.access == self.Access.APP
-                )
-                and ability.plugin != 'training'
+                           ability.access == self.Access.RED
+                           or ability.access == self.Access.APP
+                   )
+                   and ability.plugin != 'training'
             ],
         }
         obj = Adversary.load(everything)
@@ -481,7 +486,7 @@ class DataService(DataServiceInterface, BaseService):
     def _get_plugin_name(self, filename):
         plugin_path = pathlib.PurePath(filename).parts
         return plugin_path[1] if 'plugins' in plugin_path else ''
-    
+
     async def get_facts_from_source(self, fact_source_id):
         fact_sources = await self.locate('sources', match=dict(id=fact_source_id))
         if len(fact_sources) == 0:

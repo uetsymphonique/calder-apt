@@ -1,3 +1,4 @@
+import logging
 import re
 from base64 import b64decode
 from datetime import datetime, timezone
@@ -241,6 +242,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def bootstrap(self, data_svc):
         abilities = []
+        logging.debug(f'Agent {self.paw} go bootstrap')
         for i in self.get_config(name='agents', prop='bootstrap_abilities'):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
@@ -257,6 +259,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def task(self, abilities, obfuscator, facts=(), deadman=False):
         if not self.executors:
+            logging.debug(f'Agent {self.paw} not have executor')
             return []
 
         bps = BasePlanningService()

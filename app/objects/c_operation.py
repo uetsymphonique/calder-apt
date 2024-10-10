@@ -360,7 +360,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         await self.close(services)
 
     async def run(self, services):
+        self.start = datetime.now(timezone.utc)
         await self._init_source()
+
         data_svc = services.get('data_svc')
         await self._load_objective(data_svc)
         try:

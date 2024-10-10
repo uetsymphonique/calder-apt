@@ -1,9 +1,9 @@
 import asyncio
 import json
 import re
+from base64 import b64decode
 from collections import defaultdict
 from datetime import datetime, timezone
-from base64 import b64decode
 
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
@@ -11,8 +11,10 @@ from app.objects.secondclass.c_result import Result
 from app.service.interfaces.i_contact_svc import ContactServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
+from app.utility.exception_handler import async_exception_handler, exception_handler
 
 
+@exception_handler
 def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
@@ -54,6 +56,7 @@ class ContactService(ContactServiceInterface, BaseService):
         except Exception as e:
             self.log.exception('Failed to start %s contact tunnel: %s', tunnel.name, e)
 
+    @async_exception_handler
     @report
     async def handle_heartbeat(self, **kwargs):
         results = kwargs.pop('results', [])
@@ -62,10 +65,12 @@ class ContactService(ContactServiceInterface, BaseService):
             kwargs['paw'] = await self._sanitize_paw(old_paw)
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
-            self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
+            self.log.info('Incoming %s beacon from %s (%s)' % (agent.contact, agent.paw, agent.display_name))
             for result in results:
-                self.log.debug('Received result for link %s from agent %s via contact %s' % (result['id'], agent.paw,
-                                                                                             agent.contact))
+                self.log.info('Received result for link %s from agent %s (%s) via contact %s' % (
+                result['id'], agent.paw, agent.display_name,
+                agent.contact))
+
                 await self._save(Result(**result))
                 operation = await self.get_service('app_svc').find_op_with_link(result['id'])
                 access = operation.access if operation else self.Access.RED
@@ -82,7 +87,7 @@ class ContactService(ContactServiceInterface, BaseService):
                             **kwargs))
         )
         await self._add_agent_to_operation(agent)
-        self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
+        self.log.info('First time %s beacon from %s' % (agent.contact, agent.paw))
         data_svc = self.get_service('data_svc')
         await agent.bootstrap(data_svc)
         if agent.deadman_enabled:
@@ -128,6 +133,9 @@ class ContactService(ContactServiceInterface, BaseService):
                         stdout=self.decode_bytes(result.output, strip_newlines=False),
                         stderr=self.decode_bytes(result.stderr, strip_newlines=False),
                         exit_code=result.exit_code))
+                    self.log.debug(
+                        f'Result:\n{self.decode_bytes(result.output, strip_newlines=False) + self.decode_bytes(result.stderr, strip_newlines=False)}')
+                    print(f'Exit code: {result.exit_code}')
                     encoded_command_results = self.encode_string(command_results)
                     self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
@@ -180,6 +188,7 @@ class ContactService(ContactServiceInterface, BaseService):
             instructions.append(self._convert_link_to_instruction(link))
         for link in [s_link for s_link in agent.links if not s_link.collect]:
             instructions.append(self._convert_link_to_instruction(link))
+        [print(f'Instruction:\n{instruction.executor}>{instruction.command}') for instruction in instructions]
         return instructions
 
     @staticmethod

@@ -1,0 +1,70 @@
+facts:
+- collected_by: []
+  created: '2024-09-21T04:26:46Z'
+  limit_count: -1
+  links: []
+  name: file.sensitive.extension
+  origin_type: IMPORTED
+  relationships: []
+  score: 1
+  source: ed32b9c3-9593-4c33-b0db-e2007315096b
+  technique_id: null
+  trait: file.sensitive.extension
+  unique: file.sensitive.extensionwav
+  value: wav
+- collected_by: []
+  created: '2024-09-21T04:26:46Z'
+  limit_count: -1
+  links: []
+  name: file.sensitive.extension
+  origin_type: IMPORTED
+  relationships: []
+  score: 1
+  source: ed32b9c3-9593-4c33-b0db-e2007315096b
+  technique_id: null
+  trait: file.sensitive.extension
+  unique: file.sensitive.extensionyml
+  value: yml
+- collected_by: []
+  created: '2024-09-21T04:26:46Z'
+  limit_count: -1
+  links: []
+  name: file.sensitive.extension
+  origin_type: IMPORTED
+  relationships: []
+  score: 1
+  source: ed32b9c3-9593-4c33-b0db-e2007315096b
+  technique_id: null
+  trait: file.sensitive.extension
+  unique: file.sensitive.extensionpng
+  value: png
+- collected_by: []
+  created: '2024-09-21T04:26:46Z'
+  limit_count: -1
+  links: []
+  name: server.malicious.url
+  origin_type: IMPORTED
+  relationships: []
+  score: 1
+  source: ed32b9c3-9593-4c33-b0db-e2007315096b
+  technique_id: null
+  trait: server.malicious.url
+  unique: server.malicious.urlkeyloggedsite.com
+  value: keyloggedsite.com
+id: ed32b9c3-9593-4c33-b0db-e2007315096b
+name: basic
+plugin: stockpile
+relationships: []
+rules:
+- action: DENY
+  match: .*
+  trait: file.sensitive.extension
+- action: ALLOW
+  match: png
+  trait: file.sensitive.extension
+- action: ALLOW
+  match: yml
+  trait: file.sensitive.extension
+- action: ALLOW
+  match: wav
+  trait: file.sensitive.extension

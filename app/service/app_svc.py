@@ -118,7 +118,7 @@ class AppService(AppServiceInterface, BaseService):
         for plug in filter(trim, plugins):
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
-                exit(0)
+                # exit(0)
             asyncio.get_event_loop().create_task(load(plug))
 
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
