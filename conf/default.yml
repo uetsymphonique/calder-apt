@@ -26,22 +26,20 @@ app.frontend.api_base_url: http://localhost:8888
 auth.login.handler.module: default
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
-exfil_dir: /tmp/caldera
+exfil_dir: data/exfil
 host: 0.0.0.0
 objects.planners.default: atomic
 plugins:
-- access
+- manx
 - atomic
-- response
 - sandcat
 - stockpile
 - emu
-- resources
 port: 8888
 reachable_host_traits:
 - remote.host.fqdn
 - remote.host.ip
-reports_dir: /tmp
+reports_dir: reports
 requirements:
   go:
     command: go version
@@ -52,9 +50,3 @@ requirements:
     module: sys
     type: python_module
     version: 3.8.0
-users:
-  blue:
-    blue: admin
-  red:
-    admin: admin
-    red: admin

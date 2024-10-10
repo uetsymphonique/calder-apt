@@ -133,7 +133,7 @@ class ContactService(ContactServiceInterface, BaseService):
                         stdout=self.decode_bytes(result.output, strip_newlines=False),
                         stderr=self.decode_bytes(result.stderr, strip_newlines=False),
                         exit_code=result.exit_code))
-                    self.log.debug(
+                    print(
                         f'Result:\n{self.decode_bytes(result.output, strip_newlines=False) + self.decode_bytes(result.stderr, strip_newlines=False)}')
                     print(f'Exit code: {result.exit_code}')
                     encoded_command_results = self.encode_string(command_results)
@@ -188,7 +188,7 @@ class ContactService(ContactServiceInterface, BaseService):
             instructions.append(self._convert_link_to_instruction(link))
         for link in [s_link for s_link in agent.links if not s_link.collect]:
             instructions.append(self._convert_link_to_instruction(link))
-        [print(f'Instruction:\n{instruction.executor}>{instruction.command}') for instruction in instructions]
+            print(f'Instruction:\n{link.executor.platform}-{link.executor.name}{link.executor.command}')
         return instructions
 
     @staticmethod
