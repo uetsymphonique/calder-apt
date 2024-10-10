@@ -2,7 +2,6 @@ from plugins.sandcat.app.sand_svc import SandService
 
 name = 'Sandcat'
 description = 'A custom multi-platform RAT'
-address = '/plugin/sandcat/gui'
 
 
 async def enable(services):

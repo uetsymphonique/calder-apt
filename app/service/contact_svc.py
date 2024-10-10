@@ -65,9 +65,9 @@ class ContactService(ContactServiceInterface, BaseService):
             kwargs['paw'] = await self._sanitize_paw(old_paw)
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
-            self.log.info('Incoming %s beacon from %s (%s)' % (agent.contact, agent.paw, agent.display_name))
+            self.log.debug('Incoming %s beacon from %s (%s)' % (agent.contact, agent.paw, agent.display_name))
             for result in results:
-                self.log.info('Received result for link %s from agent %s (%s) via contact %s' % (
+                self.log.debug('Received result for link %s from agent %s (%s) via contact %s' % (
                 result['id'], agent.paw, agent.display_name,
                 agent.contact))
 

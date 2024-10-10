@@ -1,11 +1,8 @@
 from app.objects.c_obfuscator import Obfuscator
-from app.utility.base_world import BaseWorld
 from plugins.stockpile.app.stockpile_svc import StockpileService
 
 name = 'Stockpile'
 description = 'A stockpile of abilities, adversaries, payloads and planners'
-address = '/plugin/stockpile/gui'
-access = BaseWorld.Access.APP
 
 
 async def enable(services):

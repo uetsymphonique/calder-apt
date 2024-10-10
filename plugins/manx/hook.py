@@ -1,11 +1,8 @@
-from app.utility.base_world import BaseWorld
 from plugins.manx.app.h_terminal import Handle
 from plugins.manx.app.term_api import TermApi
 
 name = 'Terminal'
 description = 'A toolset which supports terminal access'
-address = '/plugin/manx/gui'
-access = BaseWorld.Access.RED
 
 
 async def enable(services):

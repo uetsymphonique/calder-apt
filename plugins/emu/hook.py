@@ -5,8 +5,6 @@ from plugins.emu.app.emu_svc import EmuService
 
 name = 'Emu'
 description = 'The collection of abilities from the CTID Adversary Emulation Plans'
-address = '/plugin/emu/gui'
-access = BaseWorld.Access.RED
 data_dir = os.path.join('plugins', name.lower(), 'data')
 
 

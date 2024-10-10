@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     main_config_path = "conf/default.yml"
     BaseWorld.apply_config("main", BaseWorld.strip_yml(main_config_path)[0])
-    logging.info("Using main config from %s" % main_config_path)
+    logging.debug("Using main config from %s" % main_config_path)
     BaseWorld.apply_config("agents", BaseWorld.strip_yml("conf/agents.yml")[0])
     BaseWorld.apply_config("payloads", BaseWorld.strip_yml("conf/payloads.yml")[0])
     data_svc = DataService()
