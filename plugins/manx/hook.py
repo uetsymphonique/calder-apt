@@ -16,8 +16,6 @@ async def enable(services):
     udp_contact = [c for c in services.get('contact_svc').contacts if c.name == 'websocket']
     udp_contact[0].handler.handles.append(Handle(tag='manx'))
 
-    app.router.add_static('/manx', 'plugins/manx/static/', append_version=True)
-    app.router.add_route('GET', '/plugin/manx/gui', term_api.splash)
     app.router.add_route('GET', '/plugin/manx/sessions', term_api.get_sessions)
     app.router.add_route('POST', '/plugin/manx/sessions', term_api.sessions)
     app.router.add_route('POST', '/plugin/manx/history', term_api.get_history)

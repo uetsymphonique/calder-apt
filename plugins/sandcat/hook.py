@@ -1,4 +1,3 @@
-from plugins.sandcat.app.sand_gui_api import SandGuiApi
 from plugins.sandcat.app.sand_svc import SandService
 
 name = 'Sandcat'
@@ -12,7 +11,5 @@ async def enable(services):
     sand_svc = SandService(services)
     await file_svc.add_special_payload('sandcat.go', sand_svc.dynamically_compile_executable)
     await file_svc.add_special_payload('shared.go', sand_svc.dynamically_compile_library)
-    cat_gui_api = SandGuiApi(services=services)
     app.router.add_static('/sandcat', 'plugins/sandcat/static', append_version=True)
-    app.router.add_route('GET', '/plugin/sandcat/gui', cat_gui_api.splash)
     await sand_svc.load_sandcat_extension_modules()

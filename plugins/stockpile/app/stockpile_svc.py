@@ -1,7 +1,5 @@
 import glob
-
 from shutil import which
-from aiohttp_jinja2 import template
 
 from app.utility.base_service import BaseService
 
@@ -9,15 +7,10 @@ from app.utility.base_service import BaseService
 class StockpileService(BaseService):
 
     def __init__(self, services):
-        self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.data_svc = services.get('data_svc')
         self.contact_svc = services.get('contact_svc')
         self.log = self.add_service('stockpile_svc', self)
-
-    @template('stockpile.html')
-    async def splash(self, request):
-        return dict()
 
     async def dynamically_compile(self, headers):
         name, platform = headers.get('file'), headers.get('platform')
