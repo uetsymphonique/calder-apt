@@ -3,7 +3,7 @@ from plugins.manx.app.term_api import TermApi
 
 name = 'Terminal'
 description = 'A toolset which supports terminal access'
-
+address = 'address'
 
 async def enable(services):
     await services.get('data_svc').apply('sessions')

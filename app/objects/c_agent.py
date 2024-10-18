@@ -46,7 +46,7 @@ class AgentFieldsSchema(ma.Schema):
     display_name = ma.fields.String(dump_only=True)
     created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     last_seen = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
-    links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
+    links = ma.fields.List(ma.fields.Nested(LinkSchema()), dump_only=True)
     pending_contact = ma.fields.String()
 
     @ma.pre_load

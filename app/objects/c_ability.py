@@ -12,7 +12,6 @@ from app.utility.base_world import AccessSchema
 
 
 class AbilitySchema(ma.Schema):
-
     class Meta:
         unknown = ma.EXCLUDE
 
@@ -22,13 +21,13 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(load_default=None)
     name = ma.fields.String(load_default=None)
     description = ma.fields.String(load_default=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema))
-    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), load_default=None)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema()))
+    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema()), load_default=None)
     privilege = ma.fields.String(load_default=None)
     repeatable = ma.fields.Bool(load_default=None)
     buckets = ma.fields.List(ma.fields.String(), load_default=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema, load_default=None)
+    access = ma.fields.Nested(AccessSchema(), load_default=None)
     singleton = ma.fields.Bool(load_default=None)
     plugin = ma.fields.String(load_default=None)
     delete_payload = ma.fields.Bool(load_default=None)
@@ -47,7 +46,6 @@ class AbilitySchema(ma.Schema):
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
-
     schema = AbilitySchema()
     display_schema = AbilitySchema()
 
@@ -100,8 +98,9 @@ class Ability(FirstClassObjectInterface, BaseObject):
             name_match = [x for x in ram['abilities'] if x.name == self.name]
             if name_match:
                 self.name = self.name + " (2)"
-                logging.debug(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
-                              f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
+                logging.debug(
+                    f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
+                    f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
         existing.update('tactic', self.tactic)

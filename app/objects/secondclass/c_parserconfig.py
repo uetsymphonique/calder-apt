@@ -4,7 +4,6 @@ from app.utility.base_object import BaseObject
 
 
 class ParserConfigSchema(ma.Schema):
-
     class Meta:
         unknown = ma.INCLUDE
 
@@ -34,7 +33,6 @@ class ParserConfigSchema(ma.Schema):
 
 
 class ParserConfig(BaseObject):
-
     schema = ParserConfigSchema()
 
     def __init__(self, source, edge=None, target=None, custom_parser_vals=None):

@@ -1,15 +1,14 @@
 import marshmallow as ma
 
-from app.utility.base_object import BaseObject
 from app.objects.secondclass.c_fact import FactSchema
+from app.utility.base_object import BaseObject
 
 
 class RelationshipSchema(ma.Schema):
-
     unique = ma.fields.String(dump_only=True)
-    source = ma.fields.Nested(FactSchema, required=True)
+    source = ma.fields.Nested(FactSchema(), required=True)
     edge = ma.fields.String(allow_none=True)
-    target = ma.fields.Nested(FactSchema, allow_none=True)
+    target = ma.fields.Nested(FactSchema(), allow_none=True)
     score = ma.fields.Integer()
     origin = ma.fields.String(allow_none=True)
 
@@ -29,7 +28,6 @@ class RelationshipUpdateSchema(ma.Schema):
 
 
 class Relationship(BaseObject):
-
     schema = RelationshipSchema()
     load_schema = RelationshipSchema(exclude=['unique'])
 

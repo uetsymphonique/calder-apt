@@ -20,7 +20,6 @@ class InstructionSchema(ma.Schema):
 
 
 class Instruction(BaseObject):
-
     schema = InstructionSchema()
 
     @property
@@ -29,7 +28,8 @@ class Instruction(BaseObject):
                                timeout=self.timeout, payloads=self.payloads, uploads=self.uploads, deadman=self.deadman,
                                delete_payload=self.delete_payload))
 
-    def __init__(self, id, command, executor, payloads=None, uploads=None, sleep=0, timeout=60, deadman=False, delete_payload=True):
+    def __init__(self, id, command, executor, payloads=None, uploads=None, sleep=0, timeout=60, deadman=False,
+                 delete_payload=True):
         super().__init__()
         self.id = id
         self.sleep = sleep

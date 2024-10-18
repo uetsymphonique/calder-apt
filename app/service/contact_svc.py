@@ -5,13 +5,15 @@ from base64 import b64decode
 from collections import defaultdict
 from datetime import datetime, timezone
 
+from prettytable import PrettyTable
+
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
 from app.objects.secondclass.c_result import Result
-from app.service.interfaces.i_contact_svc import ContactServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 from app.utility.exception_handler import async_exception_handler, exception_handler
+from app.utility.output_printing import OutputPrinting
 
 
 @exception_handler
@@ -26,10 +28,11 @@ def report(func):
     return wrapper
 
 
-class ContactService(ContactServiceInterface, BaseService):
+class ContactService(BaseService):
 
-    def __init__(self):
+    def __init__(self, write_file: bool):
         self.log = self.add_service('contact_svc', self)
+        self.write_file = write_file
         self.contacts = []
         self.tunnels = []
         self.report = defaultdict(list)
@@ -68,8 +71,8 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug('Incoming %s beacon from %s (%s)' % (agent.contact, agent.paw, agent.display_name))
             for result in results:
                 self.log.debug('Received result for link %s from agent %s (%s) via contact %s' % (
-                result['id'], agent.paw, agent.display_name,
-                agent.contact))
+                    result['id'], agent.paw, agent.display_name,
+                    agent.contact))
 
                 await self._save(Result(**result))
                 operation = await self.get_service('app_svc').find_op_with_link(result['id'])
@@ -87,7 +90,7 @@ class ContactService(ContactServiceInterface, BaseService):
                             **kwargs))
         )
         await self._add_agent_to_operation(agent)
-        self.log.info('First time %s beacon from %s' % (agent.contact, agent.paw))
+        self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         data_svc = self.get_service('data_svc')
         await agent.bootstrap(data_svc)
         if agent.deadman_enabled:
@@ -133,9 +136,10 @@ class ContactService(ContactServiceInterface, BaseService):
                         stdout=self.decode_bytes(result.output, strip_newlines=False),
                         stderr=self.decode_bytes(result.stderr, strip_newlines=False),
                         exit_code=result.exit_code))
-                    print(
-                        f'Result:\n{self.decode_bytes(result.output, strip_newlines=False) + self.decode_bytes(result.stderr, strip_newlines=False)}')
-                    print(f'Exit code: {result.exit_code}')
+                    OutputPrinting().print_output(
+                        f'Result:\n{self.decode_bytes(result.output, strip_newlines=False)}\n', verbose=self.write_file)
+                    OutputPrinting().print_output(f'{self.decode_bytes(result.stderr, strip_newlines=False)}\n')
+                    OutputPrinting().print_output(f'Exit code: {result.exit_code}\n')
                     encoded_command_results = self.encode_string(command_results)
                     self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
@@ -183,12 +187,35 @@ class ContactService(ContactServiceInterface, BaseService):
     async def _get_instructions(self, agent):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
         instructions = []
+        out_str = ''
         for link in [c for op in ops for c in op.chain
                      if c.paw == agent.paw and not c.collect and c.status == c.states['EXECUTE']]:
             instructions.append(self._convert_link_to_instruction(link))
+            table = PrettyTable()
+
+            def get_key_by_value(target_value):
+                states = dict(HIGH_VIZ=-5,
+                              UNTRUSTED=-4,
+                              EXECUTE=-3,
+                              DISCARD=-2,
+                              PAUSE=-1,
+                              SUCCESS=0,
+                              ERROR=1,
+                              TIMEOUT=124)
+                for key, value in states.items():
+                    if value == int(target_value):
+                        return str(key.lower())
+                return 'undefined'
+
+            table.field_names = ['Time Ran', 'Ability', 'Tactic', 'Host']
+            table.add_row(
+                [link.display["decide"], link.ability.name + ('(cleanup)' if link.cleanup else ''), link.ability.tactic,
+                 link.host])
+            out_str += str(table) + f'\n{link.executor.platform}-{link.executor.name}>{link.display["command"]}\n'
         for link in [s_link for s_link in agent.links if not s_link.collect]:
             instructions.append(self._convert_link_to_instruction(link))
-            print(f'Instruction:\n{link.executor.platform}-{link.executor.name}{link.executor.command}')
+
+        OutputPrinting().print_output(out_str)
         return instructions
 
     @staticmethod

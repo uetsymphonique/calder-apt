@@ -1,16 +1,15 @@
-import itertools
 import glob
+import itertools
 import re
 from base64 import b64decode
 from importlib import import_module
 
-from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_link import update_scores
-from app.service.interfaces.i_learning_svc import LearningServiceInterface
+from app.objects.secondclass.c_relationship import Relationship
 from app.utility.base_service import BaseService
 
 
-class LearningService(LearningServiceInterface, BaseService):
+class LearningService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('learning_svc', self)
@@ -23,8 +22,9 @@ class LearningService(LearningServiceInterface, BaseService):
     def add_parsers(directory):
         parsers = []
         for filepath in glob.iglob('%s/**.py' % directory):
-            module = import_module(filepath.replace('/', '.').replace('\\', '.').replace('.py', ''))
-            parsers.append(module.Parser())
+            if '__init__' not in filepath:
+                module = import_module(filepath.replace('/', '.').replace('\\', '.').replace('.py', ''))
+                parsers.append(module.Parser())
         return parsers
 
     async def build_model(self):

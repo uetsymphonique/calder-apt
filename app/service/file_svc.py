@@ -8,20 +8,19 @@ import subprocess
 import sys
 
 from aiohttp import web
-from multidict import CIMultiDict
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from multidict import CIMultiDict
 
-from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 
-class FileSvc(FileServiceInterface, BaseService):
+class FileSvc(BaseService):
 
     def __init__(self):
         self.log = self.add_service('file_svc', self)

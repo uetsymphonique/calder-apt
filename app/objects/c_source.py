@@ -1,17 +1,16 @@
-from collections import namedtuple
 import uuid
+from collections import namedtuple
 
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_fact import FactSchema, OriginType
-from app.objects.secondclass.c_rule import RuleSchema
 from app.objects.secondclass.c_relationship import RelationshipSchema
+from app.objects.secondclass.c_rule import RuleSchema
 from app.utility.base_object import BaseObject
 
 
 class AdjustmentSchema(ma.Schema):
-
     ability_id = ma.fields.String()
     trait = ma.fields.String()
     value = ma.fields.String()
@@ -26,13 +25,12 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
 class SourceSchema(ma.Schema):
-
     id = ma.fields.String()
     name = ma.fields.String()
-    facts = ma.fields.List(ma.fields.Nested(FactSchema))
-    rules = ma.fields.List(ma.fields.Nested(RuleSchema))
-    adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
-    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema))
+    facts = ma.fields.List(ma.fields.Nested(FactSchema()))
+    rules = ma.fields.List(ma.fields.Nested(RuleSchema()))
+    adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema()))
+    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
     plugin = ma.fields.String(load_default=None)
 
     @ma.pre_load
@@ -72,7 +70,6 @@ class SourceSchema(ma.Schema):
 
 
 class Source(FirstClassObjectInterface, BaseObject):
-
     schema = SourceSchema()
     display_schema = SourceSchema(exclude=('adjustments',))
 

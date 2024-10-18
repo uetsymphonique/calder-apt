@@ -1,9 +1,8 @@
 from app.objects.secondclass.c_link import Link
-from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
 
 
-class PlanningService(PlanningServiceInterface, BasePlanningService):
+class PlanningService(BasePlanningService):
 
     def __init__(self, global_variable_owners=None):
         super().__init__(global_variable_owners=global_variable_owners)
@@ -120,6 +119,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
           events to the event service
         :type publish_transitions: bool
         """
+
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
             await self.get_service('event_svc').fire_event(
@@ -160,7 +160,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         ao = operation.adversary.atomic_ordering
         abilities = await self.get_service('data_svc') \
-                              .locate('abilities', match=dict(ability_id=tuple(ao)))
+            .locate('abilities', match=dict(ability_id=tuple(ao)))
         if buckets:
             # buckets specified - get all links for given buckets,
             # (still in underlying atomic adversary order)

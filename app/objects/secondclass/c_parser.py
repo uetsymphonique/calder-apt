@@ -5,7 +5,6 @@ from app.utility.base_object import BaseObject
 
 
 class ParserSchema(ma.Schema):
-
     module = ma.fields.String()
     parserconfigs = ma.fields.List(ma.fields.Nested(ParserConfigSchema()))
 
@@ -22,7 +21,6 @@ class ParserSchema(ma.Schema):
 
 
 class Parser(BaseObject):
-
     schema = ParserSchema()
 
     @property

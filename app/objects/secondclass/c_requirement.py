@@ -4,7 +4,6 @@ from app.utility.base_object import BaseObject
 
 
 class RequirementSchema(ma.Schema):
-
     module = ma.fields.String()
     relationship_match = ma.fields.List(ma.fields.Dict())
 
@@ -14,7 +13,6 @@ class RequirementSchema(ma.Schema):
 
 
 class Requirement(BaseObject):
-
     schema = RequirementSchema()
 
     @property

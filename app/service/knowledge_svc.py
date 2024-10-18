@@ -3,12 +3,11 @@ from importlib import import_module
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
-from app.service.interfaces.i_knowledge_svc import KnowledgeServiceInterface
 from app.utility.base_knowledge_svc import BaseKnowledgeService
 from app.utility.base_service import BaseService
 
 
-class KnowledgeService(KnowledgeServiceInterface, BaseService):
+class KnowledgeService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('knowledge_svc', self)
@@ -21,11 +20,13 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
 
     async def add_fact(self, fact, constraints=None):
         if isinstance(fact, Fact):
-            await self.get_service('event_svc').fire_event(exchange='fact', queue='added', fact=fact.display, constraints=constraints)
+            await self.get_service('event_svc').fire_event(exchange='fact', queue='added', fact=fact.display,
+                                                           constraints=constraints)
             return await self.__loaded_knowledge_module._add_fact(fact, constraints)
 
     async def update_fact(self, criteria, updates):
-        await self.get_service('event_svc').fire_event(exchange='fact', queue='updated', criteria=criteria, updates=updates)
+        await self.get_service('event_svc').fire_event(exchange='fact', queue='updated', criteria=criteria,
+                                                       updates=updates)
         return await self.__loaded_knowledge_module._update_fact(criteria, updates)
 
     async def get_facts(self, criteria, restrictions=None):

@@ -14,14 +14,15 @@ import marshmallow as ma
 
 from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
-from app.objects.c_source import SourceSchema
-from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
-from app.objects.secondclass.c_fact import OriginType
+from app.objects.c_planner import PlannerSchema
+from app.objects.c_source import SourceSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
+from app.objects.secondclass.c_fact import OriginType
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 from app.utility.base_service import BaseService
+from app.utility.exception_handler import exception_handler, async_exception_handler
 
 NO_PREVIOUS_STATE = object()
 
@@ -30,12 +31,7 @@ class InvalidOperationStateError(Exception):
     pass
 
 
-class OperationOutputRequestSchema(ma.Schema):
-    enable_agent_output = ma.fields.Boolean(dump_default=False)
-
-
 class OperationSchema(ma.Schema):
-
     class Meta:
         unknown = ma.EXCLUDE
 
@@ -76,15 +72,6 @@ class HostSchema(ma.Schema):
     host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
     platform = ma.fields.String()
     reachable_hosts = ma.fields.List(ma.fields.String(), allow_none=True)
-
-
-class OperationSchemaAlt(OperationSchema):
-    chain = property(lambda: AttributeError)
-    host_group = property(lambda: AttributeError)
-    source = property(lambda: AttributeError)
-    visibility = property(lambda: AttributeError)
-    agents = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Nested(AgentSchema()))
-    hosts = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Nested(HostSchema()))
 
 
 class Operation(FirstClassObjectInterface, BaseObject):
@@ -264,14 +251,20 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     break
 
     async def is_closeable(self):
+        # logging.info('checking is_closeable')
         if await self.is_finished() or self.auto_close:
             self.state = self.states['FINISHED']
             return True
         return False
 
     async def is_finished(self):
-        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
-                or (self.objective and self.objective.completed(await self.all_facts())):
+        # logging.info("checking is_finished")
+        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']]:
+            logging.info(f'finished by state: {self.state}')
+            return True
+
+        if self.objective and self.objective.completed(await self.all_facts()):
+            logging.info(f'finished by objective: {self.objective.display}')
             return True
         return False
 
@@ -353,10 +346,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 if not step.can_ignore()]
 
     async def cede_control_to_planner(self, services):
+        # logging.info('cede_control_to_planner')
         planner = await self._get_planning_module(services)
         await planner.execute()
         while not await self.is_closeable():
-            await asyncio.sleep(10)
+            try:  # logging.info('Waiting for operation to finish...')
+                await asyncio.sleep(10)
+            except KeyboardInterrupt:
+                self.state = self.States['FINISHED']
         await self.close(services)
 
     async def run(self, services):
@@ -368,15 +365,114 @@ class Operation(FirstClassObjectInterface, BaseObject):
         try:
             await self.cede_control_to_planner(services)
             await self.write_event_logs_to_disk(services.get('file_svc'), data_svc, output=True)
+            # exit(0)
         except Exception as e:
             logging.error(e, exc_info=True)
+
+    @async_exception_handler
+    async def _get_attire_report(self, file_svc, data_svc):
+        report = await self.report(file_svc, data_svc, output=True)
+        event_logs = await self.event_logs(file_svc, data_svc, output=True)
+        return self._full_report_to_attire(report, event_logs)
+
+    @exception_handler
+    def _full_report_to_attire(self, data, event_logs):
+        target = {
+            "host": 'unknown(no target in host_group)',
+            "ip": '0.0.0.0(no target in host_group)',
+            "path": 'unknown',
+            "user": 'unknown'
+        }
+        if len(data["host_group"]) > 0:
+            host = data["host_group"][0]
+            target = {
+                "host": host["host"] or 'unknown',
+                "ip": host["host_ip_addrs"][0] if len(host[
+                                                          "host_ip_addrs"]) > 0 else f'0.0.0.0(host:{host["display_name"]}, has ips: {host["host_ip_addrs"]})',
+                "path": host["location"] or 'unknown',
+                "user": host["username"] or 'unknown'
+            }
+        return_dict = {
+            "attire-version": "1.1",
+            "execution-data": {
+                "execution-command": data["host_group"][0]["exe_name"] if len(
+                    data["host_group"]) > 0 else "caldera(no exec command)",
+                "execution-id": self.id or str(uuid.uuid4()),
+                "execution-source": data["name"] or "Caldera",
+                "execution-category": {
+                    "name": data["name"] or "Caldera",
+                    "abbreviation": "CDR"
+                },
+                "target": target,
+                "time-generated": (data["start"] or self.get_current_timestamp()).replace("Z", ".000Z")
+            },
+            "procedures": []
+        }
+        procedure_list = []
+        for order, link in enumerate(event_logs):
+            if link["ability_metadata"]["ability_name"] not in procedure_list:
+                procedure = self._mapping_field_to_attire(link, len(procedure_list), order)
+                procedure_list.append(link["ability_metadata"]["ability_name"])
+                return_dict["procedures"].append(procedure)
+            else:
+                for procedure in return_dict["procedures"]:
+                    if procedure["procedure-name"] == link["ability_metadata"]["ability_name"]:
+                        procedure["steps"].append(self._create_step(link, order))
+        return return_dict
+
+    @staticmethod
+    @exception_handler
+    def _create_step(link, order):
+        output_entries = []
+        if "output" in link:
+            if link["output"]["stdout"]:
+                output_entries.append({
+                    "content": link["output"]["stdout"],
+                    "level": "STDOUT",
+                    "type": "console"
+                })
+            if link["output"]["stderr"]:
+                output_entries.append({
+                    "content": link["output"]["stderr"],
+                    "level": "STDERR",
+                    "type": "console"
+                })
+        return {
+            "command": link["command"],
+            "executor": link["executor"],
+            "order": order,
+            "time-start": link["delegated_timestamp"].replace("Z", ".000Z"),
+            "time-stop": (link["finished_timestamp"] or link["delegated_timestamp"]).replace("Z", ".000Z"),
+            "output": output_entries
+        }
+
+    @exception_handler
+    def _mapping_field_to_attire(self, link, procedure_order, order):
+        procedure = {
+            "procedure-name": link["ability_metadata"]["ability_name"],
+            "procedure-description": link["ability_metadata"]["ability_description"],
+            "procedure-id": {
+                "type": "guid",
+                "id": link["ability_metadata"]["ability_id"]
+            },
+            "mitre-technique-id": link["attack_metadata"]["technique_id"],
+            "order": procedure_order,
+            "steps": [
+                self._create_step(link, order)
+            ]
+        }
+        return procedure
 
     async def write_event_logs_to_disk(self, file_svc, data_svc, output=False):
         event_logs = await self.event_logs(file_svc, data_svc, output=output)
         event_logs_dir = await file_svc.create_exfil_sub_directory('%s/event_logs' % self.get_config('reports_dir'))
         file_name = 'operation_%s.json' % self.id
         await self._write_logs_to_disk(event_logs, file_name, event_logs_dir, file_svc)
-        logging.debug('Wrote event logs for operation %s to disk at %s/%s' % (self.name, event_logs_dir, file_name))
+        logging.info('Wrote event logs for operation %s to disk at %s/%s' % (self.name, event_logs_dir, file_name))
+        attire_logs = await self._get_attire_report(file_svc, data_svc)
+        await self._write_logs_to_disk(attire_logs, f'attire_{self.id}.json', event_logs_dir, file_svc)
+        logging.info('Wrote attire logs for operation %s to disk at %s/%s' % (
+        self.name, event_logs_dir, f'attire_{self.id}.json'))
 
     async def _write_logs_to_disk(self, logs, file_name, dest_dir, file_svc):
         logs_dumps = json.dumps(logs) + os.linesep
@@ -447,6 +543,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         def fact_to_dict(f):
             if f:
                 return dict(trait=f.trait, value=f.value, score=f.score)
+
         data = dict(
             id=str(uuid.uuid4()),
             name=self.name,
@@ -557,13 +654,16 @@ class Operation(FirstClassObjectInterface, BaseObject):
                         group=agent.group,
                         architecture=agent.architecture,
                         username=agent.username,
+                        display_name=agent.display_name,
+                        exe_name=agent.exe_name,
                         location=agent.location,
                         pid=agent.pid,
                         ppid=agent.ppid,
                         privilege=agent.privilege,
                         host=agent.host,
                         contact=agent.contact,
-                        created=agent.created.strftime(BaseObject.TIME_FORMAT))
+                        created=agent.created.strftime(BaseObject.TIME_FORMAT),
+                        host_ip_addrs=agent.host_ip_addrs)
 
     class Reason(Enum):
         PLATFORM = 0

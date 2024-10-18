@@ -3,8 +3,8 @@ import uuid
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.utility.base_object import BaseObject
 from app.objects.secondclass.c_fact import Fact, FactSchema
+from app.utility.base_object import BaseObject
 
 
 class PlannerSchema(ma.Schema):
@@ -30,7 +30,6 @@ class PlannerSchema(ma.Schema):
 
 
 class Planner(FirstClassObjectInterface, BaseObject):
-
     schema = PlannerSchema()
     display_schema = PlannerSchema(exclude=['module', 'ignore_enforcement_modules'])
 

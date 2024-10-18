@@ -36,7 +36,6 @@ WILDCARD_STRING = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
 
 
 class FactSchema(ma.Schema):
-
     class Meta:
         unknown = ma.EXCLUDE
 
@@ -65,7 +64,6 @@ class FactUpdateRequestSchema(ma.Schema):
 
 
 class Fact(BaseObject):
-
     schema = FactSchema()
     load_schema = FactSchema(exclude=['unique'])
 

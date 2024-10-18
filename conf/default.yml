@@ -22,8 +22,6 @@ app.contact.tunnel.ssh.user_name: sandcat
 app.contact.tunnel.ssh.user_password: s4ndc4t!
 app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
-app.frontend.api_base_url: http://localhost:8888
-auth.login.handler.module: default
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: data/exfil
@@ -40,13 +38,3 @@ reachable_host_traits:
 - remote.host.fqdn
 - remote.host.ip
 reports_dir: reports
-requirements:
-  go:
-    command: go version
-    type: installed_program
-    version: 1.19
-  python:
-    attr: version
-    module: sys
-    type: python_module
-    version: 3.8.0

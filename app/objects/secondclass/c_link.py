@@ -16,12 +16,10 @@ from app.utility.base_object import BaseObject
 from app.utility.base_parser import PARSER_SIGNALS_FAILURE
 from app.utility.base_service import BaseService
 
-
 NO_STATUS_SET = object()
 
 
 class LinkSchema(ma.Schema):
-
     class Meta:
         unknown = ma.EXCLUDE
 
@@ -89,7 +87,6 @@ class LinkSchema(ma.Schema):
 
 
 class Link(BaseObject):
-
     schema = LinkSchema()
     display_schema = LinkSchema(exclude=['jitter'])
     load_schema = LinkSchema(exclude=['decide', 'pid', 'facts', 'unique', 'collect', 'finish', 'visibility',
@@ -159,7 +156,8 @@ class Link(BaseObject):
     def is_global_variable(cls, variable):
         return variable in cls.RESERVED
 
-    def __init__(self, command='', plaintext_command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
+    def __init__(self, command='', plaintext_command='', paw='', ability=None, executor=None, status=-3, score=0,
+                 jitter=0, cleanup=0, id='',
                  pin=0, host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
@@ -190,7 +188,7 @@ class Link(BaseObject):
     def __eq__(self, other):
         if isinstance(other, Link):
             return other.paw == self.paw and other.ability.ability_id == self.ability.ability_id \
-                   and other.used == self.used
+                and other.used == self.used
         return False
 
     async def parse(self, operation, result):
@@ -202,8 +200,9 @@ class Link(BaseObject):
                 relationships = await self._parse_link_result(result, parser, source_facts)
 
                 if len(relationships) > 0 and relationships[0] == PARSER_SIGNALS_FAILURE:
-                    logging.getLogger('link').debug(f'link {self.id} (ability id={self.ability.ability_id}) encountered '
-                                                    f'an error during execution, which was caught during parsing.')
+                    logging.getLogger('link').debug(
+                        f'link {self.id} (ability id={self.ability.ability_id}) encountered '
+                        f'an error during execution, which was caught during parsing.')
                     self.status = self.states['ERROR']
                     relationships = []  # we didn't actually get anything out of this, so let's reset
                 else:

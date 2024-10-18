@@ -2,30 +2,29 @@ import asyncio
 import copy
 import glob
 import itertools
+import logging
 import os
 import pathlib
+import re
 import uuid
 from datetime import time
-import re
-import logging
 
 import yaml
 from aiohttp import web
 
+from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
-from app.objects.c_ability import Ability
-from app.objects.c_source import Source
 from app.objects.c_schedule import Schedule
+from app.objects.c_source import Source
 from app.objects.secondclass.c_executor import Executor
-from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
-from app.service.interfaces.i_rest_svc import RestServiceInterface
+from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
-class RestService(RestServiceInterface, BaseService):
+class RestService(BaseService):
 
     def __init__(self):
         logging.getLogger('asyncio').setLevel(logging.WARNING)

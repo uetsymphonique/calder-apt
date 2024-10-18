@@ -1,14 +1,13 @@
 import asyncio
 import json
-import websockets
-
 from datetime import datetime, timezone
 
-from app.service.interfaces.i_event_svc import EventServiceInterface
+import websockets
+
 from app.utility.base_service import BaseService
 
 
-class EventService(EventServiceInterface, BaseService):
+class EventService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('event_svc', self)

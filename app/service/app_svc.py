@@ -8,20 +8,16 @@ import time
 from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
-
-import aiohttp_jinja2
-import jinja2
 import yaml
 from aiohttp import web
 
 from app.objects.c_plugin import Plugin
-from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
 
 Error = namedtuple('Error', ['name', 'msg', 'optional'])
 
 
-class AppService(AppServiceInterface, BaseService):
+class AppService(BaseService):
 
     @property
     def errors(self):
@@ -121,9 +117,6 @@ class AppService(AppServiceInterface, BaseService):
                 # exit(0)
             asyncio.get_event_loop().create_task(load(plug))
 
-        templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
-        templates.append('plugins/magma/dist')
-        aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform, location=''):
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform), location=location)
@@ -135,22 +128,25 @@ class AppService(AppServiceInterface, BaseService):
     async def teardown(self, main_config_file='default'):
         await self._destroy_plugins()
         await self._deregister_contacts()
-        await self._save_configurations(main_config_file=main_config_file)
-        await self._services.get('data_svc').save_state()
-        await self._services.get('knowledge_svc').save_state()
-        await self._write_reports()
+        # await self._save_configurations(main_config_file=main_config_file)
+        # await self._services.get('data_svc').save_state()
+        # await self._services.get('knowledge_svc').save_state()
+        # await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
     async def register_contacts(self):
         contact_svc = self.get_service('contact_svc')
         for contact_file in glob.iglob('app/contacts/*.py'):
-            contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
-            contact_class = import_module(contact_module_name).Contact
-            await contact_svc.register_contact(contact_class(self.get_services()))
+            if '__init__.py' not in contact_file:
+                contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
+                contact_class = import_module(contact_module_name).Contact
+                await contact_svc.register_contact(contact_class(self.get_services()))
         await self.register_contact_tunnels(contact_svc)
 
     async def register_contact_tunnels(self, contact_svc):
         for tunnel_file in glob.iglob('app/contacts/tunnels/*.py'):
+            if '__init__.py' in tunnel_file:
+                continue
             tunnel_module_name = tunnel_file.replace('/', '.').replace('\\', '.').replace('.py', '')
             tunnel_class = import_module(tunnel_module_name).Tunnel
             await contact_svc.register_tunnel(tunnel_class(self.get_services()))
@@ -171,7 +167,8 @@ class AppService(AppServiceInterface, BaseService):
                 self.log.warning(msg)
             else:
                 self.log.error(msg)
-            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version']), params.get('optional')))
+            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version']),
+                                      params.get('optional')))
             return False
         return True
 
@@ -189,14 +186,15 @@ class AppService(AppServiceInterface, BaseService):
         plugins.append(Plugin(data_dir='data'))
         while True:
             for p in plugins:
-                files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/abilities') for fle in f if
-                         time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('ability_refresh')))
+                files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir + '/abilities') for fle in f if
+                         time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(
+                             self.get_config('ability_refresh')))
                 for f in files:
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
             await asyncio.sleep(int(self.get_config('ability_refresh')))
 
-    def register_subapp(self, path: str,  app: web.Application):
+    def register_subapp(self, path: str, app: web.Application):
         """Registers a web application under the root application.
 
         Requests under `path` will be routed to this app.

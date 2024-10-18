@@ -4,7 +4,6 @@ from app.utility.base_object import BaseObject
 
 
 class GoalSchema(ma.Schema):
-
     target = ma.fields.String()
     value = ma.fields.String()
     count = ma.fields.Integer()
@@ -22,9 +21,8 @@ class GoalSchema(ma.Schema):
 
 
 class Goal(BaseObject):
-
     schema = GoalSchema()
-    MAX_GOAL_COUNT = 2**20
+    MAX_GOAL_COUNT = 2 ** 20
 
     @staticmethod
     def parse_operator(operator):

@@ -6,6 +6,7 @@ from plugins.emu.app.emu_svc import EmuService
 name = 'Emu'
 description = 'The collection of abilities from the CTID Adversary Emulation Plans'
 data_dir = os.path.join('plugins', name.lower(), 'data')
+address = 'address'
 
 
 async def enable(services):

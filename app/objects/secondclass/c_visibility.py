@@ -4,7 +4,6 @@ from app.utility.base_object import BaseObject
 
 
 class VisibilitySchema(ma.Schema):
-
     score = ma.fields.Integer()
     adjustments = ma.fields.List(ma.fields.Integer())
 
@@ -14,7 +13,6 @@ class VisibilitySchema(ma.Schema):
 
 
 class Visibility(BaseObject):
-
     MIN_SCORE = 1
     MAX_SCORE = 100
 

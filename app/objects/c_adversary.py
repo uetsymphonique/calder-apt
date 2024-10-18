@@ -5,12 +5,10 @@ import marshmallow as ma
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
-
 DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
 
 
 class AdversarySchema(ma.Schema):
-
     class Meta:
         unknown = ma.EXCLUDE
 
@@ -52,14 +50,14 @@ class AdversarySchema(ma.Schema):
 
 
 class Adversary(FirstClassObjectInterface, BaseObject):
-
     schema = AdversarySchema()
 
     @property
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None, plugin=''):
+    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None,
+                 plugin=''):
         super().__init__()
         self.adversary_id = adversary_id if adversary_id else str(uuid.uuid4())
         self.name = name

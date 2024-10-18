@@ -13,7 +13,7 @@ from app.utility.base_service import BaseService
 default_flag_params = ('server', 'group', 'listenP2P', 'c2', 'includeProxyPeers')
 gocat_variants = dict(
     basic=set(),
-    red=set(['gist', 'shared', 'shells', 'shellcode'])
+    red={'gist', 'shared', 'shells', 'shellcode'}
 )
 default_gocat_variant = 'basic'
 
@@ -212,7 +212,9 @@ class SandService(BaseService):
         module object.
         """
         module = os.path.join(root, file.split('.')[0]).replace(os.path.sep, '.')
+
         try:
+            self.log.debug(f'Trying to import {module}')
             # Module's "load" method will return the extension module object.
             return getattr(import_module(module), 'load')()
         except Exception as e:

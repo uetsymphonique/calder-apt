@@ -6,7 +6,6 @@ from app.utility.rule_set import RuleAction
 
 
 class RuleSchema(ma.Schema):
-
     action = ma_enum.EnumField(RuleAction, required=True)
     trait = ma.fields.String(required=True)
     match = ma.fields.String()
@@ -17,7 +16,6 @@ class RuleSchema(ma.Schema):
 
 
 class Rule(BaseObject):
-
     schema = RuleSchema()
 
     def __init__(self, action, trait, match='.*'):

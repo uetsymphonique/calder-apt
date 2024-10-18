@@ -8,14 +8,13 @@ from app.utility.base_object import BaseObject
 
 
 class ObjectiveSchema(ma.Schema):
-
     class Meta:
         unknown = ma.EXCLUDE
 
     id = ma.fields.String()
     name = ma.fields.String()
     description = ma.fields.String()
-    goals = ma.fields.List(ma.fields.Nested(GoalSchema))
+    goals = ma.fields.List(ma.fields.Nested(GoalSchema()))
     percentage = ma.fields.Float(dump_only=True)
 
     @ma.pre_load
@@ -29,7 +28,6 @@ class ObjectiveSchema(ma.Schema):
 
 
 class Objective(FirstClassObjectInterface, BaseObject):
-
     schema = ObjectiveSchema()
 
     @property
@@ -39,7 +37,7 @@ class Objective(FirstClassObjectInterface, BaseObject):
     @property
     def percentage(self):
         if len(self.goals) > 0:
-            return 100 * (len([g for g in self.goals if g.satisfied() is True])/len(self.goals))
+            return 100 * (len([g for g in self.goals if g.satisfied() is True]) / len(self.goals))
         return 0
 
     def completed(self, facts=None):

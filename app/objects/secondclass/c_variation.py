@@ -4,7 +4,6 @@ from app.utility.base_object import BaseObject
 
 
 class VariationSchema(ma.Schema):
-
     description = ma.fields.String()
     command = ma.fields.String()
 
@@ -14,7 +13,6 @@ class VariationSchema(ma.Schema):
 
 
 class Variation(BaseObject):
-
     schema = VariationSchema()
 
     @property

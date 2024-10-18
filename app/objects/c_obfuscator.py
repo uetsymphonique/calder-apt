@@ -8,7 +8,6 @@ from app.utility.base_object import BaseObject
 
 
 class ObfuscatorSchema(ma.Schema):
-
     name = ma.fields.String()
     description = ma.fields.String()
     module = ma.fields.String()

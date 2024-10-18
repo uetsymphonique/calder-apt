@@ -7,7 +7,6 @@ import pathlib
 import pickle
 import shutil
 import tarfile
-import warnings
 from importlib import import_module
 
 from app.objects.c_ability import Ability
@@ -20,7 +19,6 @@ from app.objects.secondclass.c_executor import Executor, ExecutorSchema
 from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
-from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 
@@ -45,7 +43,7 @@ PAYLOADS_CONFIG_EXTENSIONS_KEY = 'extensions'
 DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future update. Use load_yaml_file"
 
 
-class DataService(DataServiceInterface, BaseService):
+class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
@@ -244,15 +242,15 @@ class DataService(DataServiceInterface, BaseService):
         return [RequirementSchema().load(entry) for entry in requirements]
 
     async def load_adversary_file(self, filename, access):
-        warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
+        # warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
         await self.load_yaml_file(Adversary, filename, access)
 
     async def load_source_file(self, filename, access):
-        warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
+        # warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
         await self.load_yaml_file(Source, filename, access)
 
     async def load_objective_file(self, filename, access):
-        warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
+        # warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
         await self.load_yaml_file(Objective, filename, access)
 
     async def load_yaml_file(self, object_class, filename, access):
@@ -401,6 +399,8 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_packers(self, plugin):
         plug_packers = dict()
         for module in glob.iglob('plugins/%s/app/packers/**.py' % plugin.name):
+            if '__init__.py' in module:
+                continue
             packer = import_module(module.replace('/', '.').replace('\\', '.').replace('.py', ''))
             if await packer.check_dependencies(self.get_service('app_svc')):
                 plug_packers[packer.name] = packer
@@ -411,6 +411,8 @@ class DataService(DataServiceInterface, BaseService):
                      ['plugins/%s/app/data_encoders/**.py' % plugin.name for plugin in plugins]
         for glob_path in glob_paths:
             for module_path in glob.iglob(glob_path):
+                if '__init__.py' in module_path:
+                    continue
                 imported_module = import_module(module_path.replace('/', '.').replace('\\', '.').replace('.py', ''))
                 encoder = imported_module.load()
                 await self.store(encoder)
