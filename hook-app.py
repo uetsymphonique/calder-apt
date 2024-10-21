@@ -1,8 +1,8 @@
+import os
+
 from PyInstaller.utils.hooks import collect_submodules
 
 hidden_imports = collect_submodules('app')
-import os
-from PyInstaller.utils.hooks import collect_submodules
 
 plugins_dir = os.path.join(os.path.dirname(__file__), 'plugins')
 
